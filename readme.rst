@@ -302,38 +302,38 @@ Optionally, you can check for Virtualization Support, as described below, but an
 
 7. Register the Site
 =========================================
-    - Go to your F5 XC Console
-    - Navigate to the ``Registrations`` menu and accept the pending registration by click the blue checkmark
+- Go to your F5 XC Console
+- Navigate to the ``Registrations`` menu and accept the pending registration by click the blue checkmark
 
 .. image:: ./_pictures/registration.png
    :align: center
    :width: 700
    :alt: registration
 
-    - A new windows opens. Do not change any value, just click on ``Save and Exit``.
-    - Wait 1 minute then check site status that should be in ``PROVISIONNING`` state
+- A new windows opens. Do not change any value, just click on ``Save and Exit``.
+- Wait 1 minute then check site status that should be in ``PROVISIONNING`` state
 
 .. image:: ./_pictures/Site_provisionning.png
    :align: center
    :width: 700
    :alt: PROVISIONNING
 
-    - Using the the SSH connection at step 6, follow the installation logs
+- Using the the SSH connection at step 6, follow the installation logs
 
 .. code-block:: bash
 
     >>> log vpm
 
-    - Wait 15 minute then check site status that should be in ``ON LINE`` state
-    - Check detailed site Status, if IPsec is used for VPN tunnels or SSL. SSL is used if IPsec port are not allowed on your FW or if your are using a Transparent Proxy.
+- Wait 15 minute then check site status that should be in ``ON LINE`` state
+- Check detailed site Status, if IPsec is used for VPN tunnels or SSL. SSL is used if IPsec port are not allowed on your FW or if your are using a Transparent Proxy.
 
 .. image:: ./_pictures/Site_status.png
    :align: center
    :width: 700
    :alt: ON_LINE
 
-    - Click on ``Upgrade`` if the installed OS is not the latest
-    - Your SSH connection will be closed during upgrade. Connect gain in order to check installation logs.
+- Click on ``Upgrade`` if the installed OS is not the latest
+- Your SSH connection will be closed during upgrade. Connect gain in order to check installation logs.
 
 .. code-block:: bash
 
