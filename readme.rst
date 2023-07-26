@@ -338,3 +338,19 @@ Optionally, you can check for Virtualization Support, as described below, but an
 .. code-block:: bash
 
     >>> log vpm
+
+- Wait 15mn, you should have this status
+
+.. image:: ./_pictures/Site_upgraded.png
+   :align: center
+   :width: 700
+   :alt: OK
+
+- Troubleshooting tips: restart VM
+
+.. code-block:: bash
+
+    virsh shutdown Volterra
+    virsh list --all
+    virsh start Volterra
+    virsh console X
