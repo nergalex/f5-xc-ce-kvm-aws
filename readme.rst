@@ -9,7 +9,7 @@ but the CE must seat between an existing Reverse-Proxy and the API GW in the dat
 
 .. image:: ./_pictures/design.svg
    :align: center
-   :width: 600
+   :width: 500
    :alt: Architecture
 
 This guide described the solution the solution for AWS: **deploy CE nodes using KVM on a bare metal server on AWS**.
@@ -59,9 +59,9 @@ Deployment guide
 - Connect to i3.metal instance using SSH
 
 .. code-block:: bash
-    :emphasize-lines: 1
 
     ssh -i my-private-ssh-key.pem ubuntu@<IP-ADDRESS>
+
 
 - Elevate your privilege:
 
@@ -71,6 +71,7 @@ Deployment guide
     sudo su -
     cd /home/ubuntu/
 
+
 Optionally, you can check for Virtualization Support, as described below, but an i3.metal instance type supports it.
 
 - Install a package to check for Virtualization Support
@@ -79,6 +80,7 @@ Optionally, you can check for Virtualization Support, as described below, but an
     :emphasize-lines: 1
 
     apt install cpu-checker
+
 
 - Check for Virtualization Support
 
@@ -90,6 +92,7 @@ Optionally, you can check for Virtualization Support, as described below, but an
     INFO: /dev/kvm exists
     KVM acceleration can be used
 
+
 3. Install Packages
 =========================================
 
@@ -98,6 +101,7 @@ Optionally, you can check for Virtualization Support, as described below, but an
 
     apt update
     apt install qemu qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils virt-manager
+
 
 4. Configure HugePages
 =========================================
@@ -111,6 +115,7 @@ Optionally, you can check for Virtualization Support, as described below, but an
     (...)
     GRUB_CMDLINE_LINUX="default_hugepagesz=2M hugepagesz=2M hugepages=1200"
 
+
 - Update the configuration to make HugePages effective.
 
 .. code-block:: bash
@@ -118,6 +123,7 @@ Optionally, you can check for Virtualization Support, as described below, but an
 
     update-grub
     grub-mkconfig -o /boot/grub/grub.cfg
+
 
 - In AWS console, change the ``Instance state`` to ``Reboot instance``
 - Wait 5mn then connect again using SSH
@@ -137,6 +143,7 @@ Optionally, you can check for Virtualization Support, as described below, but an
     HugePages_Surp:        0
     Hugepagesize:       2048 kB
     Hugetlb:         2457600 kB
+
 
 5. Create a Virtual Network
 =========================================
@@ -163,12 +170,14 @@ Optionally, you can check for Virtualization Support, as described below, but an
       </ip>
     </network>
 
+
 - Define the new ``virtual network``
 
 .. code-block:: bash
     :emphasize-lines: 1-2
 
     virsh net-define new_libvirt_network.xml
+
 
 - Destroy the existing ``default`` virtual network
 
@@ -177,12 +186,14 @@ Optionally, you can check for Virtualization Support, as described below, but an
 
     virsh net-destroy default
 
+
 - Start the virtual network and enable it for autostart.
 
 .. code-block:: bash
     :emphasize-lines: 1-2
     virsh net-start virtualnetwork1
     virsh net-autostart virtualnetwork1
+
 
 - List the libvirt networks to verify that the virtual network was created.
 
@@ -194,6 +205,7 @@ Optionally, you can check for Virtualization Support, as described below, but an
      Name              State    Autostart   Persistent
     ----------------------------------------------------
      virtualnetwork1   active   yes         yes
+
 
 - Optionally, list your bridge devices.
 
