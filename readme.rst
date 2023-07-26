@@ -66,7 +66,6 @@ Deployment guide
 - Elevate your privilege:
 
 .. code-block:: bash
-    :emphasize-lines: 1-2
 
     sudo su -
     cd /home/ubuntu/
@@ -77,7 +76,6 @@ Optionally, you can check for Virtualization Support, as described below, but an
 - Install a package to check for Virtualization Support
 
 .. code-block:: bash
-    :emphasize-lines: 1
 
     apt install cpu-checker
 
@@ -85,7 +83,6 @@ Optionally, you can check for Virtualization Support, as described below, but an
 - Check for Virtualization Support
 
 .. code-block:: bash
-    :emphasize-lines: 1
 
     kvm-ok
 
@@ -97,7 +94,6 @@ Optionally, you can check for Virtualization Support, as described below, but an
 =========================================
 
 .. code-block:: bash
-    :emphasize-lines: 1-2
 
     apt update
     apt install qemu qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils virt-manager
@@ -108,7 +104,6 @@ Optionally, you can check for Virtualization Support, as described below, but an
 - Set value for parameter ``GRUB_CMDLINE_LINUX``:
 
 .. code-block:: bash
-    :emphasize-lines: 1,4
 
     vi /etc/default/grub
 
@@ -119,7 +114,6 @@ Optionally, you can check for Virtualization Support, as described below, but an
 - Update the configuration to make HugePages effective.
 
 .. code-block:: bash
-    :emphasize-lines: 1-2
 
     update-grub
     grub-mkconfig -o /boot/grub/grub.cfg
@@ -130,7 +124,6 @@ Optionally, you can check for Virtualization Support, as described below, but an
 - Check the HugePages configuration after the host reboot:
 
 .. code-block:: bash
-    :emphasize-lines: 1
 
     cat /proc/meminfo | grep Huge
 
@@ -151,7 +144,6 @@ Optionally, you can check for Virtualization Support, as described below, but an
 - Create the specification for a new ``virtual network``. In the underlay network conflicts, set the network address field with a different subnet.
 
 .. code-block:: bash
-    :emphasize-lines: 1-2
 
     touch new_libvirt_network.xml
     vi new_libvirt_network.xml
@@ -174,7 +166,6 @@ Optionally, you can check for Virtualization Support, as described below, but an
 - Define the new ``virtual network``
 
 .. code-block:: bash
-    :emphasize-lines: 1-2
 
     virsh net-define new_libvirt_network.xml
 
@@ -182,7 +173,6 @@ Optionally, you can check for Virtualization Support, as described below, but an
 - Destroy the existing ``default`` virtual network
 
 .. code-block:: bash
-    :emphasize-lines: 1
 
     virsh net-destroy default
 
@@ -190,7 +180,6 @@ Optionally, you can check for Virtualization Support, as described below, but an
 - Start the virtual network and enable it for autostart.
 
 .. code-block:: bash
-    :emphasize-lines: 1-2
     virsh net-start virtualnetwork1
     virsh net-autostart virtualnetwork1
 
@@ -198,7 +187,6 @@ Optionally, you can check for Virtualization Support, as described below, but an
 - List the libvirt networks to verify that the virtual network was created.
 
 .. code-block:: bash
-    :emphasize-lines: 1
 
     virsh net-list
 
@@ -210,7 +198,6 @@ Optionally, you can check for Virtualization Support, as described below, but an
 - Optionally, list your bridge devices.
 
 .. code-block:: bash
-    :emphasize-lines: 1
 
     brctl show
 
@@ -224,21 +211,18 @@ Optionally, you can check for Virtualization Support, as described below, but an
 - Download the latest ISO file using the copied URI
 
 .. code-block:: bash
-    :emphasize-lines: 1
 
     wget https://downloads.volterra.io/dev/images/centos/7.2009.27-202211040823/vsb-ves-ce-certifiedhw-generic-production-centos-7.2009.27-202211040823.1667791030.iso
 
 - Create a Virtual Disk Image (VDI) file
 
 .. code-block:: bash
-    :emphasize-lines: 1
 
     emu-img create /var/lib/libvirt/images/volterra.qcow 45G
 
 - Create a new virtual machine using the latest ISO file downloaded
 
 .. code-block:: bash
-    :emphasize-lines: 1-9
 
     virt-install \
         --name Volterra \
@@ -259,7 +243,6 @@ Optionally, you can check for Virtualization Support, as described below, but an
 - Verify the status of the virtual machine
 
 .. code-block:: bash
-    :emphasize-lines: 1
 
     virsh list --all
 
@@ -270,7 +253,6 @@ Optionally, you can check for Virtualization Support, as described below, but an
 - Optionally, connect the virtual machine using the Console access
 
 .. code-block:: bash
-    :emphasize-lines: 1
 
     virsh console 1
 
@@ -286,7 +268,6 @@ Optionally, you can check for Virtualization Support, as described below, but an
 - Connect to the virtual machine using SSH: username: **admin**, password: **Volterra123**
 
 .. code-block:: bash
-    :emphasize-lines: 1,5
 
     virsh domifaddr Volterra
      Name       MAC address          Protocol     Address
@@ -295,13 +276,18 @@ Optionally, you can check for Virtualization Support, as described below, but an
 
     ssh admin@192.168.122.161
 
+- Configure the ``Network`` options if you use an Explicit Web Proxy
+
+.. code-block:: bash
+
+    >>> configure-network
+
 - Configure the main options:
     - ``Latitude`` and ``Longitude``: the GPS location of your AWS region
     - ``Token``: see chapter Prerequisites
     - ``site name``: choose your own name
 
 .. code-block:: bash
-    :emphasize-lines: 1-9
 
     >>> configure
     ? What is your token? 950d6972-e415-46c2-85dc-6fa42b7f42a2
@@ -335,32 +321,20 @@ Optionally, you can check for Virtualization Support, as described below, but an
     - Using the the SSH connection at step 6, follow the installation logs
 
 .. code-block:: bash
-    :emphasize-lines: 1
 
     >>> log vpm
 
     - Wait 15 minute then check site status that should be in ``ON LINE`` state
-    - Optionally, check detailed site Status
+    - Check detailed site Status, if IPsec is used for VPN tunnels or SSL. SSL is used if IPsec port are not allowed on your FW or if your are using a Transparent Proxy.
 
-.. image:: ./_pictures/Site_provisionning.png
+.. image:: ./_pictures/Site_status.png
    :align: center
    :width: 700
-   :alt: PROVISIONNING
+   :alt: ON_LINE
 
+    - Click on ``Upgrade`` if the installed OS is not the latest
+    - Your SSH connection will be closed during upgrade. Connect gain in order to check installation logs.
 
-2. Create a Site Token
-=========================================
-Follow the chapter `here <https://docs.cloud.f5.com/docs/how-to/site-management/create-kvm-libvirt-site#create-a-site-token>`_
+.. code-block:: bash
 
-qemu-img create /var/lib/libvirt/images/volterra3.qcow2 45G
-
-virt-install \
-    --name Volterra3 \
-    --memory 28000 \
-    --vcpus=8 \
-    --network network=virtualnetwork1,model=virtio \
-    --accelerate \
-    --disk path=/var/lib/libvirt/images/volterra3.qcow2,bus=virtio,cache=none,size=64 \
-    --cdrom /home/ubuntu/vsb-ves-ce-certifiedhw-generic-production-centos-7.2009.27-202211040823.1667791030.iso \
-    --noautoconsole \
-    --noreboot
+    >>> log vpm
