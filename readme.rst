@@ -1,4 +1,4 @@
-Install a F5 Distributed Cloud Customer Edge's Node using KVM on AWS
+Install a F5 XC CE Node using KVM on AWS
 ####################################################################
 Some customer design requires to deploy a F5 Distributed Cloud (XC) Customer Edge (CE) in an internal network.
 CE nodes has no Public IP address, no AWS Internet Gateway but Internet access is allowed through an egress gateway:
