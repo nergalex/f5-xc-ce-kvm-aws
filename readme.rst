@@ -342,14 +342,14 @@ Optionally, you can check for Virtualization Support, as described below, but an
 
     >>> log vpm
 
-- Wait 15mn, you should have this status
+- Wait 15mn, you should have the status ``UP`` for Control Plane and Data Plane
 
 .. image:: ./_pictures/Site_upgraded.png
    :align: center
    :width: 700
    :alt: OK
 
-- Troubleshooting tips: restart VM
+- Troubleshooting tips: restart the VM if the status is ``DOWN``, then check vpm logs
 
 .. code-block:: bash
 
