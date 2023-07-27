@@ -238,7 +238,10 @@ Optionally, you can check for Virtualization Support, as described below, but an
 - Wait 5mn
 - Start the virtual machine
 
+.. code-block:: bash
+
     virsh start Volterra
+
 
 - Verify the status of the virtual machine
 
