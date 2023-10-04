@@ -219,7 +219,7 @@ Optionally, you can check for Virtualization Support, as described below, but an
 
 .. code-block:: bash
 
-    emu-img create /var/lib/libvirt/images/volterra.qcow 45G
+    qemu-img create /var/lib/libvirt/images/volterra.qcow 45G
 
 - Create a new virtual machine using the latest ISO file downloaded
 
