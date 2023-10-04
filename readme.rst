@@ -180,6 +180,7 @@ Optionally, you can check for Virtualization Support, as described below, but an
 - Start the virtual network and enable it for autostart.
 
 .. code-block:: bash
+
     virsh net-start virtualnetwork1
     virsh net-autostart virtualnetwork1
 
