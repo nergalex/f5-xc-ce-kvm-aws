@@ -352,9 +352,10 @@ Optionally, you can check for Virtualization Support, as described below, but an
 
 - Troubleshooting tips: restart the VM if the status is ``DOWN``, then check vpm logs
 
-.. code-block:: bash
-
-    virsh shutdown Volterra
-    virsh list --all
-    virsh start Volterra
-    virsh console X
+    - shutdown a VM: ``virsh shutdown Volterra``
+    - list all VMs: ``virsh list --all``
+    - start a VM: ``virsh start Volterra``
+    - connect to a console access line: ``virsh console X``
+    - delete VM and eliminate all associated storage: ``virsh undefine --domain Volterra --remove-all-storage``
+    - remove VM storage: ``rm -rf /var/lib/libvirt/images/volterra.qcow``
+    - other tips `here <https://www.cyberciti.biz/faq/howto-linux-delete-a-running-vm-guest-on-kvm/>`_
