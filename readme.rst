@@ -22,7 +22,9 @@ use the native CE deployment in XC Console `AWS Site <https://docs.cloud.f5.com/
 
 Source
 *****************************************
-This guide is based on the `Create KVM Site <https://docs.cloud.f5.com/docs/how-to/site-management/create-kvm-libvirt-site>`_ technical documentation.
+- `Create KVM Site <https://docs.cloud.f5.com/docs/how-to/site-management/create-kvm-libvirt-site>`_
+- `Configure KVM / Forwarding Incoming Connections <https://wiki.libvirt.org/Networking.html#forwarding-incoming-connections>`_
+
 
 Prerequisites
 *****************************************
@@ -30,7 +32,8 @@ AWS
 =========================================
 - **At least one interface**: A ``VPC`` with at least one ``Subnet``
 - **Internet reachability**: The ``Routing Table`` attached to the ``Subnet`` has a default route via a ``Transit Gateway`` or an egress security service
-- **Internet connectivity to XC Console**: The egress security service allows the HTTP(S) flows listed `here <https://docs.cloud.f5.com/docs/reference/network-cloud-ref>`_
+- **Internet connectivity to XC Console**: The egress security service allows ``Google Registry`` domain in the ``Allowed Domains`` listed `here <https://docs.cloud.f5.com/docs/reference/network-cloud-ref>`_.
+- **Explicit HTTP proxy**: An explicit HTTP proxy is present in your infrastructure, for example http://10.0.8.163:8080. Configuration guide on BIG-IP `here <https://community.f5.com/t5/technical-articles/configure-the-f5-big-ip-as-an-explicit-forward-web-proxy-using/ta-p/286647>`_. The web proxy allows the ``Allowed Domains`` listed `here <https://docs.cloud.f5.com/docs/reference/network-cloud-ref>`_.
 - **Amazon EC2 Bare Metal Instance type i3.metal**: `i3.metal <https://aws.amazon.com/pt/ec2/instance-types/i3/>`_ allows `the operational system to be executed directly on the underlying hardware <https://aws.amazon.com/blogs/aws/new-amazon-ec2-bare-metal-instances-with-direct-access-to-hardware/>`_.
 - **Storage**: 100 GB minimum
 
@@ -236,7 +239,17 @@ Optionally, you can check for Virtualization Support, as described below, but an
         --noautoconsole \
         --noreboot
 
-- Wait 5mn
+- Wait **5mn** for the installation. At the end, the VM will be in status shut down
+
+.. code-block:: bash
+
+    virsh list --all
+
+     Id   Name       State
+    --------------------------
+     1    Volterra   shut down
+
+
 - Start the virtual machine
 
 .. code-block:: bash
@@ -254,7 +267,11 @@ Optionally, you can check for Virtualization Support, as described below, but an
     --------------------------
      1    Volterra   running
 
-- Optionally, connect the virtual machine using the Console access
+6. Configure Node
+=========================================
+- Due to untimely throttling on Google Container Registry side from client NATed behind an AWS Public IP, the installation of VPM (``/usr/bin/docker pull gcr.io/volterraio/vpm:v1-0``) could take 4 hours (240MB). Console access during the installation in progress will show this error ``-- admin: no shell: No such file or directory``
+- Connect to the virtual machine using SSH or the Console access: username: **admin**, password: **Volterra123**
+    i. Console access
 
 .. code-block:: bash
 
@@ -267,9 +284,10 @@ Optionally, you can check for Virtualization Support, as described below, but an
     All actions performed on this device are audited
     master-0 login:
 
-6. Configure Node
-=========================================
-- Connect to the virtual machine using SSH: username: **admin**, password: **Volterra123**
+
+------------------------------------------------------------------------------------------------------------------------
+
+    ii. SSH access
 
 .. code-block:: bash
 
@@ -290,6 +308,7 @@ Optionally, you can check for Virtualization Support, as described below, but an
     - ``Latitude`` and ``Longitude``: the GPS location of your AWS region
     - ``Token``: see chapter Prerequisites
     - ``site name``: choose your own name
+    ? Use a proxy: http://10.0.8.163:8080 # ToDo update the documentation by copying/pasting the right output
 
 .. code-block:: bash
 
@@ -300,11 +319,12 @@ Optionally, you can check for Virtualization Support, as described below, but an
     ? What is your latitude? [optional] 48.866667
     ? What is your longitude? [optional] 2.333333
     ? What is your default fleet name? [optional]
+    ? Use a proxy: http://10.0.8.163:8080 # ToDo update the documentation by copying/pasting the right output
     ? Select certified hardware: kvm-voltmesh
     ? Select primary outside NIC: eth0
     ? Confirm configuration? Yes
 
-7. Register the Site
+7. Register the Node
 =========================================
 - Go to your F5 XC Console
 - Navigate to the ``Registrations`` menu and accept the pending registration by click the blue checkmark
@@ -359,3 +379,219 @@ Optionally, you can check for Virtualization Support, as described below, but an
     - delete VM and eliminate all associated storage: ``virsh undefine --domain Volterra --remove-all-storage``
     - remove VM storage: ``rm -rf /var/lib/libvirt/images/volterra.qcow``
     - other tips `here <https://www.cyberciti.biz/faq/howto-linux-delete-a-running-vm-guest-on-kvm/>`_
+
+Forward incoming connections
+*****************************************
+1. Define a static IP for the Node
+=========================================
+- Show the mac address of the Node: ``virsh domifaddr Volterra``
+
+.. code-block:: bash
+
+     Name       MAC address          Protocol     Address
+    -------------------------------------------------------------------------------
+     vnet0      52:54:00:2b:3a:33    ipv4         192.168.122.30/24
+
+
+- Stop the Node VM: ``virsh shutdown Volterra``
+
+- Edit the Bridge to set static IP address for the Node and add the <host> line. ``virsh net-edit virtualnetwork1``
+
+.. code-block:: bash
+
+    <network>
+      <name>virtualnetwork1</name>
+      <forward mode='nat'>
+        <nat>
+          <port start='1024' end='65535'/>
+        </nat>
+      </forward>
+      <bridge name='bridge1' stp='on' delay='0'/>
+      <ip address='192.168.122.1' netmask='255.255.255.0'>
+        <dhcp>
+          <range start='192.168.122.2' end='192.168.122.254'/>
+          <host mac="52:54:00:2b:3a:33" name="Volterra" ip="192.168.122.30"/>
+        </dhcp>
+      </ip>
+    </network>
+
+
+2. Expose a service
+=========================================
+The objective is to redirect the HTTPS (TCP/443) service to the Node VM.
+
+- Create and set the variables: ``GUEST_IP`` ``GUEST_PORT`` ``HOST_PORT``: ``vi /etc/libvirt/hooks/qemu``
+
+.. code-block:: bash
+
+    if [ "${1}" = "Volterra" ]; then
+
+       # Update the following variables to fit your setup
+        GUEST_IP="192.168.122.30"
+        GUEST_PORT="443"
+        HOST_PORT="443"
+
+       if [ "${2}" = "stopped" ] || [ "${2}" = "reconnect" ]; then
+        /sbin/iptables -D FORWARD -o bridge1 -p tcp -d $GUEST_IP --dport $GUEST_PORT -j ACCEPT
+        /sbin/iptables -t nat -D PREROUTING -p tcp --dport $HOST_PORT -j DNAT --to $GUEST_IP:$GUEST_PORT
+       fi
+       if [ "${2}" = "start" ] || [ "${2}" = "reconnect" ]; then
+        /sbin/iptables -I FORWARD -o bridge1 -p tcp -d $GUEST_IP --dport $GUEST_PORT -j ACCEPT
+        /sbin/iptables -t nat -I PREROUTING -p tcp --dport $HOST_PORT -j DNAT --to $GUEST_IP:$GUEST_PORT
+       fi
+    fi
+
+
+- Make this script executable
+
+.. code-block:: bash
+
+    chmod +x /etc/libvirt/hooks/qemu
+
+
+- Show configuration of Forwarding and NATing table before applying the change
+
+.. code-block:: bash
+
+    iptables -L FORWARD -nv --line-number
+    iptables -t nat -L PREROUTING -n -v --line-number
+
+
+- Restart the libvirtd service
+
+.. code-block:: bash
+
+    systemctl restart libvirtd.service
+
+
+- Start the Node
+
+.. code-block:: bash
+
+    virsh start Volterra
+
+
+
+- Show configuration of Forwarding and NATing table after the VM is deployed
+
+.. code-block:: bash
+
+    root:~# iptables -L FORWARD -nv --line-number
+
+    Chain FORWARD (policy ACCEPT 0 packets, 0 bytes)
+    num   pkts bytes target     prot opt in     out     source               destination
+    1       30  1975 ACCEPT     tcp  --  *      bridge1  0.0.0.0/0            192.168.122.30       tcp dpt:443
+    2      15M   10G DOCKER-USER  all  --  *      *       0.0.0.0/0            0.0.0.0/0
+    3      15M   10G DOCKER-ISOLATION-STAGE-1  all  --  *      *       0.0.0.0/0            0.0.0.0/0
+    4        0     0 ACCEPT     all  --  *      docker0  0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+    5        0     0 DOCKER     all  --  *      docker0  0.0.0.0/0            0.0.0.0/0
+    6        0     0 ACCEPT     all  --  docker0 !docker0  0.0.0.0/0            0.0.0.0/0
+    7        0     0 ACCEPT     all  --  docker0 docker0  0.0.0.0/0            0.0.0.0/0
+    8      15M   10G LIBVIRT_FWX  all  --  *      *       0.0.0.0/0            0.0.0.0/0
+    9      15M   10G LIBVIRT_FWI  all  --  *      *       0.0.0.0/0            0.0.0.0/0
+    10   7813K 2427M LIBVIRT_FWO  all  --  *      *       0.0.0.0/0            0.0.0.0/0
+
+
+    #------------------------------------------------------------------------------------------------------------------#
+
+    root:~# iptables -t nat -L PREROUTING -n -v --line-number
+
+    Chain PREROUTING (policy ACCEPT 9505 packets, 609K bytes)
+    num   pkts bytes target     prot opt in     out     source               destination
+    1       35  2100 DNAT       tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:443 to:192.168.122.30:443
+    2    10943  784K DOCKER     all  --  *      *       0.0.0.0/0            0.0.0.0/0            ADDRTYPE match dst-type LOCAL
+
+3. Configure a simple service
+=========================================
+The objective is to create an HTTP Load Balancer that is listening on port HTTP TCP/443 and returns a page 200 OK.
+Then test the flow.
+
+- In XC Console: ``Web App & API Protection`` >> ``Manage`` >> ``Load Balancers`` >> ``HTTP Load Balancers`` >> ``Add``
+- Copy the configuration below, change the values ``<MyNameSpace>`` ``<MyTenantName>`` ``<MySiteName>``
+
+.. code-block:: yaml
+
+    metadata:
+      name: test-aws
+      namespace: <MyNameSpace>
+      labels: {}
+      annotations: {}
+      disable: false
+    spec:
+      domains:
+      - test.me
+      http:
+        dns_volterra_managed: false
+        port: 443
+      downstream_tls_certificate_expiration_timestamps: []
+      advertise_custom:
+        advertise_where:
+        - site:
+            network: SITE_NETWORK_INSIDE_AND_OUTSIDE
+            site:
+              tenant: "<MyTenantName>"
+              namespace: system
+              name: "<MySiteName>"
+              kind: site
+          use_default_port: {}
+      default_route_pools: []
+      routes:
+      - direct_response_route:
+          http_method: ANY
+          path:
+            prefix: "/"
+          headers: []
+          incoming_port:
+            no_port_match: {}
+          route_direct_response:
+            response_code: 200
+            response_body: OK
+      disable_waf: {}
+      add_location: true
+      no_challenge: {}
+      user_id_client_ip: {}
+      disable_rate_limit: {}
+      waf_exclusion_rules: []
+      data_guard_rules: []
+      blocked_clients: []
+      trusted_clients: []
+      ddos_mitigation_rules: []
+      no_service_policies: {}
+      round_robin: {}
+      disable_trust_client_ip_headers: {}
+      disable_ddos_detection: {}
+      disable_malicious_user_detection: {}
+      disable_api_discovery: {}
+      disable_bot_defense: {}
+      disable_api_definition: {}
+      disable_ip_reputation: {}
+      disable_client_side_defense: {}
+      graphql_rules: []
+      protected_cookies: []
+
+
+- Test from a remote client that is authorized to communicate with the Node
+
+.. code-block:: bash
+
+    curl test.me:443 --resolve test.me:443:10.0.134.131 -vvv
+    * Added test.me:443:10.0.134.131 to DNS cache
+    * Rebuilt URL to: test.me:443/
+    * Hostname test.me was found in DNS cache
+    *   Trying 10.0.134.131...
+    * Connected to test.me (10.0.134.131) port 443 (#0)
+    > GET / HTTP/1.1
+    > Host: test.me:443
+    > User-Agent: curl/7.47.1
+    > Accept: */*
+    >
+    < HTTP/1.1 200 OK
+    < content-length: 2
+    < content-type: text/plain
+    < date: Fri, 13 Oct 2023 07:16:03 GMT
+    < server: volt-adc
+    <
+    * Connection #0 to host test.me left intact
+    OK
+
+- Tips to troubleshoot iptable: `here <https://www.cyberciti.biz/faq/kvm-forward-ports-to-guests-vm-with-ufw-on-linux/>`_
