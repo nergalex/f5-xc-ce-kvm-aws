@@ -12,7 +12,7 @@ but the CE must seat between an existing Reverse-Proxy and the API GW in the dat
    :width: 500
    :alt: Architecture - same VPC
 
-Egress doors (FW and explicit web proxy) can be in remote VPCs.
+Egress doors (FW and explicit web proxy) can be in a different *egress* VPC.
 
 .. image:: ./_pictures/design.svg
    :align: center
