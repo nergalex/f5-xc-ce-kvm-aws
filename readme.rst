@@ -278,6 +278,9 @@ Optionally, you can check for Virtualization Support, as described below, but an
 =========================================
 - Due to untimely throttling on Google Container Registry side from client NATed behind an AWS Public IP, the installation of VPM (``/usr/bin/docker pull gcr.io/volterraio/vpm:v1-0``) could take 4 hours (240MB). Console access during the installation in progress will show this error ``-- admin: no shell: No such file or directory``
 - Connect to the virtual machine using SSH or the Console access: username: **admin**, password: **Volterra123**
+
+------------------------------------------------------------------------------------------------------------------------
+
     i. Console access
 
 .. code-block:: bash
