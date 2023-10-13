@@ -7,17 +7,18 @@ for example a FW or an egress Web Proxy hosted in an *egress VPC*.
 The use case could be to have a CE for discovering API endpoints of published applications
 but the CE must seat between an existing Reverse-Proxy and the API GW in the data path.
 
-.. image:: ./_pictures/design-egress-same-vpc.svg
-   :align: center
-   :width: 500
-   :alt: Architecture - same VPC
-
-Egress doors (FW and explicit web proxy) can be in a different *egress* VPC.
-
 .. image:: ./_pictures/design.svg
    :align: center
    :width: 500
    :alt: Architecture - Transit GW
+
+
+Egress doors (FW and explicit web proxy) can be in a hosted in the same VPC.
+
+.. image:: ./_pictures/design-egress-same-vpc.svg
+   :align: center
+   :width: 500
+   :alt: Architecture - same VPC
 
 This guide described the solution the solution for AWS: **deploy CE nodes using KVM on a bare metal server on AWS**.
 
@@ -27,7 +28,7 @@ use the native CE deployment in XC Console `AWS Site <https://docs.cloud.f5.com/
 .. contents:: Contents
     :local:
 
-Source
+Sources
 *****************************************
 - `Create KVM Site <https://docs.cloud.f5.com/docs/how-to/site-management/create-kvm-libvirt-site>`_
 - `Configure KVM / Forwarding Incoming Connections <https://wiki.libvirt.org/Networking.html#forwarding-incoming-connections>`_
