@@ -7,15 +7,17 @@ for example a FW or an egress Web Proxy hosted in an *egress VPC*.
 The use case could be to have a CE for discovering API endpoints of published applications
 but the CE must seat between an existing Reverse-Proxy and the API GW in the data path.
 
-.. image:: ./_pictures/design.svg
-   :align: center
-   :width: 500
-   :alt: Architecture - Transit GW
-
 .. image:: ./_pictures/design-egress-same-vpc.svg
    :align: center
    :width: 500
    :alt: Architecture - same VPC
+
+Egress doors (FW and explicit web proxy) can be in remote VPCs.
+
+.. image:: ./_pictures/design.svg
+   :align: center
+   :width: 500
+   :alt: Architecture - Transit GW
 
 This guide described the solution the solution for AWS: **deploy CE nodes using KVM on a bare metal server on AWS**.
 
