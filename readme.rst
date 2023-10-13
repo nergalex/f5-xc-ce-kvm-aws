@@ -10,7 +10,12 @@ but the CE must seat between an existing Reverse-Proxy and the API GW in the dat
 .. image:: ./_pictures/design.svg
    :align: center
    :width: 500
-   :alt: Architecture
+   :alt: Architecture - Transit GW
+
+.. image:: ./_pictures/design-egress-same-vpc.svg
+   :align: center
+   :width: 500
+   :alt: Architecture - same VPC
 
 This guide described the solution the solution for AWS: **deploy CE nodes using KVM on a bare metal server on AWS**.
 
